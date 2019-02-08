@@ -10,18 +10,21 @@
 namespace
 {
 
-struct PosColorVertex
+struct PosColorVertex32
 {
 	float m_x;
 	float m_y;
 	float m_z;
+	float w;
+	float nx, ny, nz;
 	uint32_t m_abgr;
 
 	static void init()
 	{
 		ms_decl
 			.begin()
-			.add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
 			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
 			.end();
 	};
@@ -29,18 +32,65 @@ struct PosColorVertex
 	static bgfx::VertexDecl ms_decl;
 };
 
-bgfx::VertexDecl PosColorVertex::ms_decl;
-
-static PosColorVertex s_cubeVertices[] =
+struct PosColorVertex28
 {
-	{-1.0f,  1.0f,  1.0f, 0xff000000 },
-	{ 1.0f,  1.0f,  1.0f, 0xff0000ff },
-	{-1.0f, -1.0f,  1.0f, 0xff00ff00 },
-	{ 1.0f, -1.0f,  1.0f, 0xff00ffff },
-	{-1.0f,  1.0f, -1.0f, 0xffff0000 },
-	{ 1.0f,  1.0f, -1.0f, 0xffff00ff },
-	{-1.0f, -1.0f, -1.0f, 0xffffff00 },
-	{ 1.0f, -1.0f, -1.0f, 0xffffffff },
+	float m_x;
+	float m_y;
+	float m_z;
+	float w;
+	float nx, ny;
+	uint32_t m_abgr;
+
+	static void init()
+	{
+		ms_decl
+			.begin()
+			.add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+			.add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
+			.end();
+	};
+
+	static bgfx::VertexDecl ms_decl;
+};
+
+bgfx::VertexDecl PosColorVertex32::ms_decl;
+bgfx::VertexDecl PosColorVertex28::ms_decl;
+
+static PosColorVertex32 s_cubeVertices32Pad[] =
+{
+	{-1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff },
+	{-1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff },
+
+		//{-1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff },
+	//{-1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xffffffff },
+
+
+
+};
+
+static PosColorVertex32 s_cubeVertices32[] =
+{
+	{-1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+	{ 1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+	{-1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+	{ 1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+	{-1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+	{ 1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+	{-1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+	{ 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0xff0000ff },
+};
+
+static PosColorVertex28 s_cubeVertices28[] =
+{
+	{-1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
+	{ 1.0f,  1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
+	{-1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
+	{ 1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
+	{-1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
+	{ 1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
+	{-1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
+	{ 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0xffff00ff },
 };
 
 static const uint16_t s_cubeTriList[] =
@@ -164,15 +214,17 @@ public:
 			);
 
 		// Create vertex stream declaration.
-		PosColorVertex::init();
-
-		// Create static vertex buffer.
-		m_vbh = bgfx::createVertexBuffer(
-			// Static data can be passed with bgfx::makeRef
-			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
-			, PosColorVertex::ms_decl
-			);
-
+		PosColorVertex32::init();
+		PosColorVertex28::init();
+#if 0
+		m_vbh32 = bgfx::createDynamicVertexBuffer(sizeof(s_cubeVertices32), PosColorVertex32::ms_decl, 0);
+		m_vbh32pad = bgfx::createDynamicVertexBuffer(sizeof(s_cubeVertices32Pad), PosColorVertex32::ms_decl, 0);
+		m_vbh28 = bgfx::createDynamicVertexBuffer(sizeof(s_cubeVertices28), PosColorVertex28::ms_decl, 0);
+#else
+		m_vbh32 = bgfx::createDynamicVertexBuffer(1, PosColorVertex32::ms_decl, BGFX_BUFFER_ALLOW_RESIZE);
+		m_vbh32pad = bgfx::createDynamicVertexBuffer(1, PosColorVertex32::ms_decl, BGFX_BUFFER_ALLOW_RESIZE);
+		m_vbh28 = bgfx::createDynamicVertexBuffer(1, PosColorVertex28::ms_decl, BGFX_BUFFER_ALLOW_RESIZE);
+#endif
 		// Create static index buffer for triangle list rendering.
 		m_ibh[0] = bgfx::createIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
@@ -221,7 +273,8 @@ public:
 			bgfx::destroy(m_ibh[ii]);
 		}
 
-		bgfx::destroy(m_vbh);
+		bgfx::destroy(m_vbh32);
+		bgfx::destroy(m_vbh28);
 		bgfx::destroy(m_program);
 
 		// Shutdown bgfx.
@@ -306,6 +359,13 @@ public:
 				| s_ptState[m_pt]
 				;
 
+			// REPRO: if this line is commented out, the red cubes are painted all red
+			// if it's compiled, one of the cube vertex has the wrong color
+			bgfx::update(m_vbh32pad, 0, bgfx::makeRef(s_cubeVertices32Pad, sizeof(s_cubeVertices32Pad)));
+
+			bgfx::update(m_vbh32, 0, bgfx::makeRef(s_cubeVertices32, sizeof(s_cubeVertices32)));
+			bgfx::update(m_vbh28, 0, bgfx::makeRef(s_cubeVertices28, sizeof(s_cubeVertices28)));
+
 			// Submit 11x11 cubes.
 			for (uint32_t yy = 0; yy < 11; ++yy)
 			{
@@ -321,7 +381,12 @@ public:
 					bgfx::setTransform(mtx);
 
 					// Set vertex and index buffer.
-					bgfx::setVertexBuffer(0, m_vbh);
+					if (yy > 5) {
+						bgfx::setVertexBuffer(0, m_vbh28);
+					}
+					else {
+						bgfx::setVertexBuffer(0, m_vbh32);
+					}
 					bgfx::setIndexBuffer(ibh);
 
 					// Set render states.
@@ -348,7 +413,9 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	bgfx::VertexBufferHandle m_vbh;
+	bgfx::DynamicVertexBufferHandle m_vbh32pad;
+	bgfx::DynamicVertexBufferHandle m_vbh32;
+	bgfx::DynamicVertexBufferHandle m_vbh28;
 	bgfx::IndexBufferHandle m_ibh[BX_COUNTOF(s_ptState)];
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;
