@@ -167,38 +167,43 @@ public:
 		PosColorVertex::init();
 
 		// Create static vertex buffer.
-		m_vbh = bgfx::createVertexBuffer(
+		m_vbh = bgfx::createDynamicVertexBuffer(
 			// Static data can be passed with bgfx::makeRef
 			  bgfx::makeRef(s_cubeVertices, sizeof(s_cubeVertices) )
 			, PosColorVertex::ms_layout
 			);
 
+		// the following 2 lines trigger the bug
+		static uint32_t data[2048];
+		auto temp = bgfx::createDynamicIndexBuffer(bgfx::copy(data, 2048 * 4), BGFX_BUFFER_INDEX32);
+		// if BGFX_BUFFER_INDEX32 is not passed then the bug is not triggered
+
 		// Create static index buffer for triangle list rendering.
-		m_ibh[0] = bgfx::createIndexBuffer(
+		m_ibh[0] = bgfx::createDynamicIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
 			bgfx::makeRef(s_cubeTriList, sizeof(s_cubeTriList) )
 			);
 
 		// Create static index buffer for triangle strip rendering.
-		m_ibh[1] = bgfx::createIndexBuffer(
+		m_ibh[1] = bgfx::createDynamicIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
 			bgfx::makeRef(s_cubeTriStrip, sizeof(s_cubeTriStrip) )
 			);
 
 		// Create static index buffer for line list rendering.
-		m_ibh[2] = bgfx::createIndexBuffer(
+		m_ibh[2] = bgfx::createDynamicIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
 			bgfx::makeRef(s_cubeLineList, sizeof(s_cubeLineList) )
 			);
 
 		// Create static index buffer for line strip rendering.
-		m_ibh[3] = bgfx::createIndexBuffer(
+		m_ibh[3] = bgfx::createDynamicIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
 			bgfx::makeRef(s_cubeLineStrip, sizeof(s_cubeLineStrip) )
 			);
 
 		// Create static index buffer for point list rendering.
-		m_ibh[4] = bgfx::createIndexBuffer(
+		m_ibh[4] = bgfx::createDynamicIndexBuffer(
 			// Static data can be passed with bgfx::makeRef
 			bgfx::makeRef(s_cubePoints, sizeof(s_cubePoints) )
 			);
@@ -293,7 +298,7 @@ public:
 			// if no other draw calls are submitted to view 0.
 			bgfx::touch(0);
 
-			bgfx::IndexBufferHandle ibh = m_ibh[m_pt];
+			bgfx::DynamicIndexBufferHandle ibh = m_ibh[m_pt];
 			uint64_t state = 0
 				| (m_r ? BGFX_STATE_WRITE_R : 0)
 				| (m_g ? BGFX_STATE_WRITE_G : 0)
@@ -348,8 +353,8 @@ public:
 	uint32_t m_height;
 	uint32_t m_debug;
 	uint32_t m_reset;
-	bgfx::VertexBufferHandle m_vbh;
-	bgfx::IndexBufferHandle m_ibh[BX_COUNTOF(s_ptState)];
+	bgfx::DynamicVertexBufferHandle m_vbh;
+	bgfx::DynamicIndexBufferHandle m_ibh[BX_COUNTOF(s_ptState)];
 	bgfx::ProgramHandle m_program;
 	int64_t m_timeOffset;
 	int32_t m_pt;
